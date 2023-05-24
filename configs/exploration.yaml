@@ -1,0 +1,20 @@
+ENV_NAME: 'Unimal-v0'
+OUT_DIR: './output'
+ENV:
+  MODULES: ["Agent", "Terrain", "Objects"]
+  FORWARD_REWARD_WEIGHT: 0.0
+  TASK: "exploration"
+  KEYS_TO_KEEP: []
+MODEL:
+  TRANSFORMER:
+    EXT_HIDDEN_DIMS: []
+    DECODER_DIMS: []
+    EXT_MIX: None
+TERRAIN:
+  SIZE: [50, 50, 1]
+  START_FLAT: 0
+  CENTER_FLAT: 50
+  FLAT_LENGTH_RANGE: [50, 50, 1]
+  HFIELD_LENGTH_RANGE: [50, 50, 1]
+  TYPES: ["curve_slope"]
+  BOUNDARY_WALLS: True

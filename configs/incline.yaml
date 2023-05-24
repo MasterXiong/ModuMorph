@@ -1,0 +1,13 @@
+ENV_NAME: 'Unimal-v0'
+OUT_DIR: './output'
+ENV:
+  MODULES: ["Agent", "Terrain"]
+  STAND_HEIGHT_RATIO: 0.2
+  TASK: "incline"
+TERRAIN:
+  SIZE: [75, 20, 1]
+  START_FLAT: 75
+  CENTER_FLAT: 0
+  TYPES: ["curve_slope"]
+  BOUNDARY_WALLS: False
+  INCLINE_ANGLE: -10
