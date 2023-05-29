@@ -4,3 +4,6 @@ log*/
 .vscode/
 unimals_100
 test*
+
+output/*
+*.egg-info
