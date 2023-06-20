@@ -118,7 +118,7 @@ class PPO:
                     device=self.device,
                 )
 
-                self.buffer.insert(obs, act, logp, val, reward, masks, timeouts, dropout_mask_v, dropout_mask_mu, unimal_ids, limb_logp)
+                self.buffer.insert(obs, act, logp, val, reward, masks, timeouts, dropout_mask_v, dropout_mask_mu, unimal_ids)
                 obs = next_obs
 
             if cfg.MODEL.TRANSFORMER.PER_NODE_EMBED:
