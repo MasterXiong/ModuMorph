@@ -373,11 +373,7 @@ class Agent:
             "proprioceptive": self.combine_limb_joint_obs(limb_obs, joint_obs, env).flatten(),
             "edges": self.edges, 
             "context": context_obs.flatten(), 
-            "connectivity": self.connectivity, 
-            'node_depth': self.node_depth_padded, 
             'traversals': self.traversals, 
-            'node_path_length': node_path_length, 
-            'node_path_mask': node_path_mask, 
             'SWAT_RE': self.SWAT_RE, 
         }
 

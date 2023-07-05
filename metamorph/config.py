@@ -374,12 +374,7 @@ _C.MODEL.CONTEXT_OBS_TYPES = [
 # Model specific observation types to keep
 _C.MODEL.OBS_TYPES = [
     "proprioceptive", "edges", "obs_padding_mask", "act_padding_mask", 
-    "context", 
-    "connectivity", 
-    "node_depth", 
     "traversals", 
-    'node_path_length', 
-    'node_path_mask', 
     'SWAT_RE', 
 ]
 
@@ -466,24 +461,6 @@ _C.MODEL.TRANSFORMER.USE_SWAT_PE = False
 _C.MODEL.TRANSFORMER.TRAVERSALS = ['pre', 'inlcrs', 'postlcrs']
 # use SWAT RE
 _C.MODEL.TRANSFORMER.USE_SWAT_RE = False
-# use separate PE
-_C.MODEL.TRANSFORMER.USE_SEPARATE_PE = False
-_C.MODEL.TRANSFORMER.SEPARATE_PE_UPDATE_ITER = 0
-# tree PE
-_C.MODEL.TRANSFORMER.TREE_PE_IN_CONTEXT = False
-_C.MODEL.TRANSFORMER.MAX_CHILD_NUM = 4
-# graph PE
-_C.MODEL.TRANSFORMER.GRAPH_PE_IN_CONTEXT = False
-_C.MODEL.TRANSFORMER.GRAPH_PE_DIM = 3
-# node depth PE
-_C.MODEL.TRANSFORMER.NODE_DEPTH_IN_CONTEXT = False
-_C.MODEL.TRANSFORMER.MAX_NODE_DEPTH = 6
-# children number PE
-_C.MODEL.TRANSFORMER.CHILD_NUM_IN_CONTEXT = False
-# RNN PE
-_C.MODEL.TRANSFORMER.RNN_CONTEXT = False
-# add connectivity to TF attention mask
-_C.MODEL.TRANSFORMER.USE_CONNECTIVITY_IN_ATTENTION = False
 
 # test per-node embed and decode
 _C.MODEL.TRANSFORMER.PER_NODE_EMBED = False

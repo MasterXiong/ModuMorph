@@ -58,8 +58,7 @@ class PPO:
 
         self.train_meter = TrainMeter()
         self.writer = SummaryWriter(log_dir=os.path.join(cfg.OUT_DIR, "tensorboard"))
-        #obs = self.envs.reset()
-        #self.writer.add_graph(self.actor_critic, obs)
+
         # Get the param name for log_std term, can vary depending on arch
         for name, param in self.actor_critic.state_dict().items():
             if "log_std" in name:
@@ -92,7 +91,6 @@ class PPO:
             
             lr = ou.get_iter_lr(cur_iter)
             ou.set_lr(self.optimizer, lr, self.lr_scale)
-
 
             for step in range(cfg.PPO.TIMESTEPS):
                 # get the id of each robot if needed
@@ -291,7 +289,6 @@ class PPO:
             save_dir,
             record_video_trigger=lambda x: x == 0,
             video_length=cfg.PPO.VIDEO_LENGTH,
-            # file_prefix=self.file_prefix,
             file_prefix=xml,
         )
         

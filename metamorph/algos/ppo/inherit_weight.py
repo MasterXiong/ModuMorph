@@ -11,7 +11,6 @@ def restore_from_checkpoint(ac):
 
     fine_tune_layers = set()
     layer_substrings = cfg.MODEL.FINETUNE.LAYER_SUBSTRING
-    # print (state_dict_p.keys())
     for name, param in state_dict_c.items():
 
         if any(name_substr in name for name_substr in layer_substrings):

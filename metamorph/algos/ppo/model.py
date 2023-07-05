@@ -205,7 +205,6 @@ class TransformerModel(nn.Module):
         self.dropout = nn.Dropout(p=0.1)
 
         self.init_weights()
-        self.count = 0
 
     def init_weights(self):
         # init obs embedding
@@ -283,7 +282,7 @@ class TransformerModel(nn.Module):
             else:
                 obs_embed = self.limb_embed(obs)
         
-        if self.model_args.EMBEDDING_SCALE:
+        if self.model_args.EMBEDDING_SCALE: # default to true
             obs_embed *= math.sqrt(self.d_model)
 
         attention_maps = None
@@ -376,8 +375,7 @@ class PositionalEncoding(nn.Module):
         if batch_first:
             self.pe = nn.Parameter(torch.randn(1, seq_len, d_model))
         else:
-            # self.pe = nn.Parameter(torch.randn(seq_len, 1, d_model))
-            self.pe = nn.Parameter(torch.zeros(seq_len, 1, d_model))
+            self.pe = nn.Parameter(torch.randn(seq_len, 1, d_model))
 
     def forward(self, x):
         """
@@ -397,7 +395,6 @@ class SWATPEEncoder(nn.Module):
         self.pe_dim[-1] = d_model - self.pe_dim[0] * (len(cfg.MODEL.TRANSFORMER.TRAVERSALS) - 1)
         print (self.pe_dim)
         self.swat_pe = nn.ModuleList([nn.Embedding(seq_len, dim) for dim in self.pe_dim])
-        # self.compress_layer = nn.Linear(len(cfg.MODEL.TRANSFORMER.TRAVERSALS) * d_model, d_model)
 
     def forward(self, x, indexes):
         """
@@ -411,7 +408,6 @@ class SWATPEEncoder(nn.Module):
             pe = self.swat_pe[i](idx)
             embeddings.append(pe)
         embeddings = torch.cat(embeddings, dim=-1)
-        # x = x + self.compress_layer(embeddings)
         x = x + embeddings
         return x
 
@@ -436,6 +432,7 @@ class ActorCritic(nn.Module):
         if cfg.MODEL.TYPE == 'transformer':
             self.v_net = TransformerModel(obs_space, 1)
         else:
+            # MLP network
             self.v_net = MLPModel(obs_space, cfg.MODEL.MAX_LIMBS)
 
         if cfg.ENV_NAME == "Unimal-v0":
@@ -557,8 +554,6 @@ class Agent:
         act_mask = obs["act_padding_mask"].bool()
         logp[act_mask] = 0.0
         logp = logp.sum(-1, keepdim=True)
-        self.v_attention_maps = v_attention_maps
-        self.mu_attention_maps = mu_attention_maps
         return val, act, logp, dropout_mask_v, dropout_mask_mu
 
     @torch.no_grad()
