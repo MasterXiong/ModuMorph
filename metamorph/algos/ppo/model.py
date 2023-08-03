@@ -199,8 +199,6 @@ class TransformerModel(nn.Module):
         # whether to use SWAT PE and RE: default to False
         if self.model_args.USE_SWAT_PE:
             self.swat_PE_encoder = SWATPEEncoder(self.d_model, self.seq_len)
-        if self.model_args.USE_SEPARATE_PE:
-            self.separate_PE_encoder = SeparatePEEncoder(self.d_model, self.seq_len)
 
         self.dropout = nn.Dropout(p=0.1)
 

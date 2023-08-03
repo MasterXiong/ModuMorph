@@ -70,7 +70,6 @@ class Agent:
         env.metadata["orig_height"] = round(orig_height, 2)
         env.metadata["fall_threshold"] = orig_height * cfg.ENV.STAND_HEIGHT_RATIO
         self._change_order(env, root)
-        self.node_depth = self.get_tree_depth(root)
 
     def _change_order(self, env, root):
         worldbody = root.findall("./worldbody")[0]
@@ -98,29 +97,6 @@ class Agent:
             mirror_order.index(o)
             for o in orig_order
         ]
-    
-    def get_tree_depth(self, root):
-        worldbody = root.findall("./worldbody")[0]
-        root = xu.find_elem(worldbody, "body", "name", "torso/0")[0]
-
-        def tree_treversal(order, depth_list, depth=1):
-            children = xu.find_elem(order[-1], "body", child_only=True)
-            for c in children:
-                order.append(c)
-                depth_list.append(depth)
-                tree_treversal(order, depth_list, depth=depth + 1)
-        
-        order = [root]
-        depth_list = [0]
-        tree_treversal(order, depth_list, depth=1)
-        max_depth = max(depth_list)
-        # turn depth into one-hot form
-        node_depth = np.zeros([len(depth_list), cfg.MODEL.TRANSFORMER.MAX_NODE_DEPTH])
-        for i in range(len(depth_list)):
-            node_depth[i, depth_list[i]] = 1.
-            # node_depth[i, -1] = depth_list[i] / max_depth
-        self.node_depth_padded = np.concatenate([node_depth, np.zeros([cfg.MODEL.MAX_LIMBS - node_depth.shape[0], node_depth.shape[1]])], axis=0)
-        return node_depth
 
     def modify_sim_step(self, env, sim):
         self.agent_qpos_idxs = np.array(mu.qpos_idxs_for_agent(sim))
@@ -136,7 +112,7 @@ class Agent:
         self.limb_btm_sites = [
             site for site in env.metadata["agent_sites"] if "limb/btm" in site
         ]
-        self.edges, self.connectivity, self.traversals, self.tree_PE, self.graph_PE, self.SWAT_RE = self._get_edges(sim)
+        self.edges, self.traversals, self.SWAT_RE = self._get_edges(sim)
         env.metadata["num_limbs"] = len(self.agent_body_idxs)
         env.metadata["num_joints"] = len(sim.model.joint_names) - 1
         # Useful for attention map analysis
@@ -197,44 +173,8 @@ class Agent:
             relational_features = swat.getGraphDict(parents)
         else:
             relational_features = np.zeros([cfg.MODEL.MAX_LIMBS, cfg.MODEL.MAX_LIMBS, 3])
-        # generate node feature sequence from root to each node
-        self.tree_path = [[] for _ in range(len(children))]
-        for i in range(len(self.tree_path)):
-            self.tree_path[i].append(i)
-            for child in children[i]:
-                self.tree_path[child].extend(self.tree_path[i])
 
-        # generate tree PE from the paper "Novel positional encodings to enable tree-based transformers"
-        node_depth = [len(x) - 1 for x in self.tree_path]
-        max_child_num = cfg.MODEL.TRANSFORMER.MAX_CHILD_NUM
-        tree_PE = np.zeros([len(children), (cfg.MODEL.TRANSFORMER.MAX_NODE_DEPTH - 1) * max_child_num])
-        for parent_id, node_children in enumerate(children):
-            for branch_id, child_id in enumerate(node_children):
-                # tree_PE[child_id] = tree_PE[parent_id]
-                # tree_PE[child_id, max_child_num:] = tree_PE[child_id, :-max_child_num]
-                # tree_PE[child_id, branch_id] = 1.
-                tree_PE[child_id] = tree_PE[parent_id]
-                depth = node_depth[child_id]
-                tree_PE[child_id, (depth - 1) * max_child_num + branch_id] = 1.
-        
-        self.children_num = np.zeros([len(children), 1])
-        for i in range(len(children)):
-            self.children_num[i] = len(children[i]) / cfg.MODEL.TRANSFORMER.MAX_CHILD_NUM
-
-        connectivity = np.zeros([cfg.MODEL.MAX_LIMBS, cfg.MODEL.MAX_LIMBS, 3])
-        connectivity[:, :, 0] = np.eye(cfg.MODEL.MAX_LIMBS)
-        adjacency_matrix = np.zeros([cfg.MODEL.MAX_LIMBS, cfg.MODEL.MAX_LIMBS])
-        for i in range(len(joint_to)):
-            child_idx, parent_idx = joint_to[i], joint_from[i]
-            connectivity[parent_idx, child_idx, 1] = 1.
-            connectivity[child_idx, parent_idx, 2] = 1.
-            adjacency_matrix[parent_idx, child_idx] = 1.
-            adjacency_matrix[child_idx, parent_idx] = 1.
-        idx = np.where(adjacency_matrix.sum(axis=1) != 0)[0]
-        adjacency_matrix = adjacency_matrix[idx, :][:, idx]
-        graph_PE = pe.create_graph_PE(adjacency_matrix, cfg.MODEL.TRANSFORMER.GRAPH_PE_DIM)
-
-        return np.vstack((joint_to, joint_from)).T.flatten(), connectivity, traversals, tree_PE, graph_PE, relational_features
+        return np.vstack((joint_to, joint_from)).T.flatten(), traversals, relational_features
 
     def get_context(self, sim):
         context_limb = {}
@@ -363,12 +303,6 @@ class Agent:
         limb_obs = self.get_limb_obs(sim)
         joint_obs = self.get_joint_obs(sim)
         context_obs = self.combine_limb_joint_obs(self.context_limb, self.context_joint, env)
-        node_path_length = np.zeros(cfg.MODEL.MAX_LIMBS, dtype=int)
-        node_path_mask = np.zeros([cfg.MODEL.MAX_LIMBS, cfg.MODEL.MAX_LIMBS])
-        for i, path in enumerate(self.tree_path):
-            node_path_length[i] = len(path) - 1
-            node_path_mask[i] = 1
-            node_path_mask[i, path] = 0
         return {
             "proprioceptive": self.combine_limb_joint_obs(limb_obs, joint_obs, env).flatten(),
             "edges": self.edges, 
